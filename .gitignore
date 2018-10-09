@@ -1,0 +1,6 @@
+admin/*
+**.pyc
+notebooks/.ipynb_checkpoints/*
+models/saved_models/tf_models/*
+.DS_Store
+.idea/*
