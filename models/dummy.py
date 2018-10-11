@@ -4,7 +4,7 @@ from train_generator import main
 
 strokes = numpy.load('../data/strokes.npy')
 stroke = strokes[0]
-trained_strokes = numpy.load('../models/saved_models/unconditional_writing_h64_t200_b1_e20.npy')
+trained_strokes = numpy.load('../models/saved_models/unconditional_writing_h256_t300_b1_e30.npy')
 
 
 def generate_unconditionally(random_seed=1):
@@ -13,7 +13,7 @@ def generate_unconditionally(random_seed=1):
 
     # Output:
     #   stroke - numpy 2D-array (T x 3)
-
+    trained_strokes[-1, 0] = 1
     return trained_strokes
 
 
@@ -38,6 +38,7 @@ def recognize_stroke(stroke):
 
 def test():
     generate_unconditionally()
+
 
 if __name__ == '__main__':
     test()

@@ -12,9 +12,9 @@ def create_batches(strokes_batch):
                 break
             else:
                 new_strokes_batch[i][j] = stroke[j]
-
-        new_strokes_batch = np.minimum(new_strokes_batch, 30)
-        new_strokes_batch = np.maximum(new_strokes_batch, -30)
+        new_strokes_batch[:, -1, 0] = 1
+        # new_strokes_batch = np.minimum(new_strokes_batch, 30)
+        # new_strokes_batch = np.maximum(new_strokes_batch, -30)
         new_strokes_batch = np.array(new_strokes_batch, dtype=np.float32)
 
     return new_strokes_batch

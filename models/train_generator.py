@@ -17,10 +17,9 @@ def main(random_seed=1):
         with tf.Session() as sess:
             model = HandWritingGenerator(random_seed=random_seed)
             sess.run(tf.global_variables_initializer())
-            avg_loss, means, variance, co_rel = None, None, None, None
             if not os.path.exists(save_path):
-                avg_loss, means, variance, co_rel, pi = train(strokes, sess, model)
-            return model.run_batch(sess=sess, means=means, variance=variance, co_rel=co_rel, pi=pi)
+                train(strokes, sess, model)
+            return model.run_batch(sess=sess)
 
 
 def train(strokes, sess, model):
@@ -43,8 +42,7 @@ def train(strokes, sess, model):
         avg_loss = 0.0
         for j in range(num_batches_per_epoch):
             x_t_batch = x_t_gen.next()
-            loss, means, variance, co_rel, pi = model.run_batch(sess, strokes_batch=x_t_batch, step=j, epoch=i)
-            # print("loss = ", loss, " \t step = ", j, " \t epoch = ", i)
+            loss, mu_x, mu_y, var_x, var_y, co_rel, pi = model.run_batch(sess, strokes_batch=x_t_batch, step=j, epoch=i)
             avg_loss += loss
         print("avg_loss = ", avg_loss / num_batches_per_epoch, " epoch = ", i)
     print(" rho = ", co_rel)
