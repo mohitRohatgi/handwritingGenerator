@@ -17,7 +17,7 @@ class HandWritingGenerator:
         self.n_batches = 0
         self.scale = self.config.scale
         self.saver = tf.train.Saver()
-        # np.random.seed(random_seed)
+        np.random.seed(random_seed)
 
     def add_model(self):
         self.add_placeholders()
@@ -80,7 +80,7 @@ class HandWritingGenerator:
         # finding the max acc. model to maximise it
         # loss_gauss_max_model = tf.reduce_max(self.bi_var_gauss, axis=-1, keepdims=True)
         self.loss_gaussian = -tf.log(tf.reduce_sum(self.bi_var_gauss, axis=-1))
-        self.loss_bernoulli = -tf.log((self.e * y_e + (1 - self.e) * (1 - y_e)))
+        self.loss_bernoulli = -tf.log((self.config.bernoulli_loss_weight * self.e * y_e + (1 - self.e) * (1 - y_e)))
         self.loss = tf.reduce_sum(self.loss_bernoulli + self.loss_gaussian)
 
     # prob, pi = (batch_size, time_steps, 20)
@@ -92,8 +92,8 @@ class HandWritingGenerator:
         z = tf.square(z1) + tf.square(z2) - 2 * self.co_rel * z1 * z2
         co_rel_sq = 1.0 - tf.square(self.co_rel)
         prob = tf.exp(-z / (2.0 * co_rel_sq))
-        prob /= 2.0 * np.pi * self.varx * self.vary * tf.sqrt(co_rel_sq)
-        return prob
+        prob /= 2.0 * np.pi * self.varx * self.vary * tf.sqrt(co_rel_sq) + 1e-8
+        return tf.maximum(prob, 1e-8)
 
     def add_train_op(self):
         with tf.variable_scope("training"):
@@ -105,10 +105,6 @@ class HandWritingGenerator:
         outputs = []
         if strokes_batch is not None:
             strokes_batch = np.reshape(strokes_batch, newshape=(self.config.batch_size, -1, 3)) / self.scale
-            # strokes_batch, mean, std = self.normalise(strokes_batch)
-            # self.data_mean += mean
-            # self.data_var += np.square(std)
-            # self.n_batches += 1
             feed_dict = {
                 self.x_t: strokes_batch[:, :-1, :],
                 self.y_t: strokes_batch[:, 1:, :],
@@ -122,7 +118,7 @@ class HandWritingGenerator:
 
             # print(" loss = ", loss, " bernoulli = ", np.sum(bernoulli_loss), " gauss loss = ", np.sum(gauss_loss),
             #       " time step = ", i, " epoch = ", epoch)
-            if math.isnan(loss) or math.isnan(gauss_loss):
+            if math.isnan(loss) or math.isnan(np.sum(gauss_loss)):
                 print(" bi_var_gauss = ", bi_var_gauss)
                 print(" prob = ", prob)
                 print(" rho = ", co_rel)
@@ -132,8 +128,7 @@ class HandWritingGenerator:
                 print(" vary = ", var_y)
                 print("mux = ", mu_x)
                 print("muy = ", mu_y)
-            # if math.isnan(loss):
-            #     exit()
+                exit()
 
             print(" loss = ", loss, " bernoulli = ", np.sum(bernoulli_loss), " gauss loss = ", np.sum(gauss_loss),
                   " step = ", step, " epoch = ", epoch)
@@ -153,13 +148,13 @@ class HandWritingGenerator:
                 output = np.array([e, x, y])
                 outputs.append(output)
             outputs[-1][0] = 1
-            outputs[:, 1:] *= self.scale
             outputs = np.squeeze(outputs)
+            outputs[:, 1:] *= self.scale
             # outputs = np.squeeze(self.unnormalise(outputs))
             np.save('saved_models/unconditional_writing_h' + str(self.config.num_hidden) + "_t" +
                     str(self.config.seq_length) + "_b" + str(self.config.batch_size) + "_e" + str(self.config.n_epoch),
                     outputs)
-            return np.squeeze(outputs)
+            return outputs
 
     def sample_rand_nums(self, mu_x, mu_y, var_x, var_y, co_rel, pi):
         means = np.array([np.squeeze(mu_x), np.squeeze(mu_y)])

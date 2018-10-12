@@ -1,10 +1,8 @@
 import numpy
-from train_generator import main
-
 
 strokes = numpy.load('../data/strokes.npy')
 stroke = strokes[0]
-trained_strokes = numpy.load('../models/saved_models/unconditional_writing_h256_t300_b1_e30.npy')
+trained_strokes = numpy.load('../models/saved_models/unconditional_writing_h256_t300_b1_e70.npy')
 
 
 def generate_unconditionally(random_seed=1):
